@@ -131,3 +131,34 @@ This is a monorepo project using pnpm workspaces to manage multiple packages and
 3. **Code Organization**
    - Keep shared code in the `packages` directory
    - Application-specific code goes in the `app` directory
+
+4. **Version Control**
+   - Commit the `pnpm-lock.yaml` file
+   - Use conventional commits
+
+## Troubleshooting
+
+1. **Clean Install**
+   ```bash
+   pnpm clean
+   pnpm install
+   ```
+
+2. **Reset Workspace**
+   ```bash
+   rm -rf node_modules
+   rm -rf packages/*/node_modules
+   rm -rf app/*/node_modules
+   pnpm install
+   ```
+
+## Contributing
+
+1. Create a new branch for your feature
+2. Make your changes
+3. Run tests and linting
+4. Submit a pull request
+
+## License
+
+ISC
