@@ -8,6 +8,8 @@ import theme from './theme';
 import Login from './pages/Login';
 import AdminDashboard from './pages/AdminDashboard';
 import EmployeeDashboard from './pages/EmployeeDashboard';
+import Navigation from './components/Navigation';
+import Profile from './pages/Profile';
  
 // Protected Route Component
 const ProtectedRoute = ({ children, allowedRoles }) => {
@@ -53,6 +55,14 @@ const AppRoutes = () => {
         }
       />
       <Route
+        path="/profile"
+        element={
+          <ProtectedRoute>
+            <Profile />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/admin/*"
         element={
           <ProtectedRoute allowedRoles={['admin']}>
@@ -78,6 +88,7 @@ const App = () => {
       <CssBaseline />
       <AuthProvider>
         <Router>
+          <Navigation />
           <AppRoutes />
         </Router>
       </AuthProvider>
