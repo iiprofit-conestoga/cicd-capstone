@@ -10,7 +10,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import EmployeeDashboard from './pages/EmployeeDashboard';
  
 // Protected Route Component
-const ProtectedRoute = ({ children, roles }) => {
+const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user, loading } = useAuth();
  
   if (loading) {
@@ -21,8 +21,9 @@ const ProtectedRoute = ({ children, roles }) => {
     return <Navigate to="/login" />;
   }
  
-  if (roles && !roles.includes(user.role)) {
-    return <Navigate to="/" />;
+  if (allowedRoles && !allowedRoles.includes(user.role_id)) {
+    // Redirect to appropriate dashboard based on role_id
+    return <Navigate to={user.role_id === 'admin' ? '/admin/dashboard' : '/employee/dashboard'} />;
   }
  
   return children;
@@ -33,28 +34,37 @@ const AppRoutes = () => {
  
   return (
     <Routes>
-      <Route path="/login" element={<Login />} />
+      <Route 
+        path="/login" 
+        element={
+          user ? (
+            <Navigate to={user.role_id === 'admin' ? '/admin/dashboard' : '/employee/dashboard'} />
+          ) : (
+            <Login />
+          )
+        } 
+      />
       <Route
         path="/"
         element={
           <ProtectedRoute>
-            {user?.role === 'admin' ? <AdminDashboard /> : <EmployeeDashboard />}
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/profile"
-        element={
-          <ProtectedRoute>
-            <Profile />
+            <Navigate to={user?.role_id === 'admin' ? '/admin/dashboard' : '/employee/dashboard'} />
           </ProtectedRoute>
         }
       />
       <Route
         path="/admin/*"
         element={
-          <ProtectedRoute roles={['admin']}>
+          <ProtectedRoute allowedRoles={['admin']}>
             <AdminDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/employee/*"
+        element={
+          <ProtectedRoute allowedRoles={['employee']}>
+            <EmployeeDashboard />
           </ProtectedRoute>
         }
       />
@@ -68,7 +78,6 @@ const App = () => {
       <CssBaseline />
       <AuthProvider>
         <Router>
-          <Navigation />
           <AppRoutes />
         </Router>
       </AuthProvider>
