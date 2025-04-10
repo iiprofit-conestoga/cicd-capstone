@@ -168,6 +168,7 @@ export const AuthProvider = ({ children }) => {
     updateProfile,
     isAuthenticated: !!user,
     isAdmin: user?.role_id === 'admin',
+    api,
   };
 
   return (

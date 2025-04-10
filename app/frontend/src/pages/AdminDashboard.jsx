@@ -19,9 +19,14 @@ import {
   TextField,
   IconButton,
   Snackbar,
-  Alert
+  Alert,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel
 } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import { useAuth } from '../contexts/AuthContext';
 const PORT = import.meta.env.VITE_PORT;
 
  
@@ -30,15 +35,19 @@ const AdminDashboard = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [formData, setFormData] = useState({
-    username: '',
+    name: '',
     email: '',
-    role: 'user'
+    password: '',
+    role_id: 'customer',
+    phoneNumber: '',
+    address: ''
   });
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
     severity: 'success'
   });
+  const { api } = useAuth();
  
   useEffect(() => {
     fetchUsers();
@@ -46,10 +55,15 @@ const AdminDashboard = () => {
  
   const fetchUsers = async () => {
     try {
-      const response = await axios.get(`http://localhost:${PORT}/api/users`);
-      setUsers(response.data);
+      const response = await api.get(`/api/users/all`);
+      if (response.data && response.data.data) {
+        setUsers(response.data.data);
+      } else {
+        setUsers([]);
+        showSnackbar('No users found', 'info');
+      }
     } catch (error) {
-      showSnackbar('Error fetching users', 'error');
+      showSnackbar(error.response?.data?.message || 'Error fetching users', 'error');
     }
   };
  
@@ -57,16 +71,22 @@ const AdminDashboard = () => {
     if (user) {
       setSelectedUser(user);
       setFormData({
-        username: user.username,
-        email: user.email,
-        role: user.role
+        name: user.name || '',
+        email: user.email || '',
+        password: '', // Don't populate password for security
+        role_id: user.role_id || 'customer',
+        phoneNumber: user.phoneNumber || '',
+        address: user.address || ''
       });
     } else {
       setSelectedUser(null);
       setFormData({
-        username: '',
+        name: '',
         email: '',
-        role: 'user'
+        password: '',
+        role_id: 'customer',
+        phoneNumber: '',
+        address: ''
       });
     }
     setOpenDialog(true);
@@ -76,9 +96,12 @@ const AdminDashboard = () => {
     setOpenDialog(false);
     setSelectedUser(null);
     setFormData({
-      username: '',
+      name: '',
       email: '',
-      role: 'user'
+      password: '',
+      role_id: 'customer',
+      phoneNumber: '',
+      address: ''
     });
   };
  
@@ -92,11 +115,19 @@ const AdminDashboard = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      // Create a copy of formData to send to the API
+      const userData = { ...formData };
+      
+      // If updating and password is empty, remove it from the request
+      if (selectedUser && !userData.password) {
+        delete userData.password;
+      }
+      
       if (selectedUser) {
-        await axios.put(`http://localhost:${PORT}/api/users/${selectedUser._id}`, formData);
+        await api.put(`/api/users/${selectedUser._id}`, userData);
         showSnackbar('User updated successfully');
       } else {
-        await axios.post(`http://localhost:${PORT}/api/users`, formData);
+        await api.post(`/api/users/add`, userData);
         showSnackbar('User created successfully');
       }
       handleCloseDialog();
@@ -109,11 +140,11 @@ const AdminDashboard = () => {
   const handleDelete = async (userId) => {
     if (window.confirm('Are you sure you want to delete this user?')) {
       try {
-        await axios.delete(`http://localhost:${PORT}/api/users/${userId}`);
+        await api.delete(`/api/users/${userId}`);
         showSnackbar('User deleted successfully');
         fetchUsers();
       } catch (error) {
-        showSnackbar('Error deleting user', 'error');
+        showSnackbar(error.response?.data?.message || 'Error deleting user', 'error');
       }
     }
   };
@@ -148,18 +179,22 @@ const AdminDashboard = () => {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>Username</TableCell>
+                <TableCell>Name</TableCell>
                 <TableCell>Email</TableCell>
                 <TableCell>Role</TableCell>
+                <TableCell>Phone Number</TableCell>
+                <TableCell>Address</TableCell>
                 <TableCell>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {users.map((user) => (
                 <TableRow key={user._id}>
-                  <TableCell>{user.username}</TableCell>
+                  <TableCell>{user.name}</TableCell>
                   <TableCell>{user.email}</TableCell>
-                  <TableCell>{user.role}</TableCell>
+                  <TableCell>{user.role_id}</TableCell>
+                  <TableCell>{user.phoneNumber || '-'}</TableCell>
+                  <TableCell>{user.address || '-'}</TableCell>
                   <TableCell>
                     <IconButton onClick={() => handleOpenDialog(user)} color="primary">
                       <EditIcon />
@@ -175,15 +210,15 @@ const AdminDashboard = () => {
         </TableContainer>
       </Box>
  
-      <Dialog open={openDialog} onClose={handleCloseDialog}>
+      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
         <DialogTitle>{selectedUser ? 'Edit User' : 'Add New User'}</DialogTitle>
         <DialogContent>
           <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
             <TextField
               fullWidth
-              label="Username"
-              name="username"
-              value={formData.username}
+              label="Name"
+              name="name"
+              value={formData.name}
               onChange={handleInputChange}
               margin="normal"
               required
@@ -200,20 +235,48 @@ const AdminDashboard = () => {
             />
             <TextField
               fullWidth
-              label="Role"
-              name="role"
-              select
-              value={formData.role}
+              label="Password"
+              name="password"
+              type="password"
+              value={formData.password}
               onChange={handleInputChange}
               margin="normal"
-              required
-              SelectProps={{
-                native: true
-              }}
-            >
-              <option value="user">User</option>
-              <option value="admin">Admin</option>
-            </TextField>
+              required={!selectedUser}
+              helperText={selectedUser ? "Leave blank to keep current password" : ""}
+            />
+            <FormControl fullWidth margin="normal">
+              <InputLabel id="role-label">Role</InputLabel>
+              <Select
+                labelId="role-label"
+                name="role_id"
+                value={formData.role_id}
+                onChange={handleInputChange}
+                label="Role"
+                required
+              >
+                <MenuItem value="customer">Customer</MenuItem>
+                <MenuItem value="employee">Employee</MenuItem>
+                <MenuItem value="admin">Admin</MenuItem>
+              </Select>
+            </FormControl>
+            <TextField
+              fullWidth
+              label="Phone Number"
+              name="phoneNumber"
+              value={formData.phoneNumber}
+              onChange={handleInputChange}
+              margin="normal"
+            />
+            <TextField
+              fullWidth
+              label="Address"
+              name="address"
+              value={formData.address}
+              onChange={handleInputChange}
+              margin="normal"
+              multiline
+              rows={2}
+            />
           </Box>
         </DialogContent>
         <DialogActions>
