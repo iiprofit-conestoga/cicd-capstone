@@ -13,13 +13,33 @@ const api = axios.create({
 // Add request interceptor to add auth token
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('accessToken');
+    const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
   (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Add response interceptor to handle token expiration
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+
+    // If error is 401 and we haven't tried to refresh token yet
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      // Clear token and redirect to login
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+      return Promise.reject(error);
+    }
+
     return Promise.reject(error);
   }
 );
@@ -48,113 +68,59 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Check for existing token and restore user session
   useEffect(() => {
-    checkAuth();
+    const initializeAuth = async () => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          // Fetch user profile
+          const response = await api.get('/api/users/profile');
+          if (response.data && response.data.data) {
+            setUser(response.data.data);
+          }
+        } catch (err) {
+          console.error('Error restoring session:', err);
+          // If token is invalid, clear it
+          localStorage.removeItem('token');
+        }
+      }
+      setLoading(false);
+    };
+
+    initializeAuth();
   }, []);
-
-  const checkAuth = async () => {
-    const token = localStorage.getItem('accessToken');
-    
-    if (!token) {
-      console.log('No token found, skipping profile check');
-      setUser(null);
-      setLoading(false);
-      return;
-    }
-
-    try {
-      // Verify if token is valid by checking its format
-      const tokenParts = token.split('.');
-      if (tokenParts.length !== 3) {
-        console.log('Invalid token format, removing token');
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        setUser(null);
-        setLoading(false);
-        return;
-      }
-
-      // Only try to get profile if token exists and is valid format
-      const response = await api.get(API_ENDPOINTS.profile);
-      if (response.data && response.data.data) {
-        setUser(response.data.data);
-      } else {
-        // If no user data, clear token
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        setUser(null);
-      }
-    } catch (error) {
-      console.error('Auth check failed:', error);
-      // Clear invalid tokens
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
-      setUser(null);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const login = async (email, password) => {
     try {
       setError(null);
-      const response = await api.post(API_ENDPOINTS.login, { email, password });
+      const response = await api.post('/api/auth/login', { email, password });
+      const { token, user: userData } = response.data.data;
       
-      if (response.data && response.data.status === 'success' && response.data.data) {
-        const { accessToken, refreshToken, ...userData } = response.data.data;
-        
-        if (accessToken) {
-          localStorage.setItem('accessToken', accessToken);
-          localStorage.setItem('refreshToken', refreshToken);
-          setUser(userData);
-          return userData;
-        } else {
-          throw new Error('No access token received from server');
-        }
-      } else {
-        throw new Error('Invalid response format from server');
-      }
-    } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Login failed. Please check your credentials.';
-      setError(errorMessage);
-      throw error;
-    }
-  };
-
-  const register = async (userData) => {
-    try {
-      setError(null);
-      const response = await api.post(API_ENDPOINTS.register, userData);
-      return response.data;
-    } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Registration failed. Please try again.';
-      setError(errorMessage);
-      throw error;
-    }
-  };
-
-  const updateProfile = async (profileData) => {
-    try {
-      setError(null);
-      const response = await api.put(API_ENDPOINTS.updateProfile, profileData);
-      if (response.data && response.data.data) {
-        setUser(response.data.data);
-      }
-      return response.data;
-    } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Profile update failed. Please try again.';
-      setError(errorMessage);
-      throw error;
+      // Store token in localStorage
+      localStorage.setItem('token', token);
+      
+      setUser(userData);
+      return userData;
+    } catch (err) {
+      setError(err.response?.data?.message || 'An error occurred during login');
+      throw err;
     }
   };
 
   const logout = async () => {
     try {
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
+      const token = localStorage.getItem('token');
+      
+      if (token) {
+        await api.post('/api/auth/logout');
+      }
+    } catch (err) {
+      console.error('Error during logout:', err);
+    } finally {
+      // Clear token and user state
+      localStorage.removeItem('token');
       setUser(null);
-    } catch (error) {
-      console.error('Logout failed:', error);
     }
   };
 
@@ -164,11 +130,9 @@ export const AuthProvider = ({ children }) => {
     error,
     login,
     logout,
-    register,
-    updateProfile,
+    api,
     isAuthenticated: !!user,
     isAdmin: user?.role_id === 'admin',
-    api,
   };
 
   return (

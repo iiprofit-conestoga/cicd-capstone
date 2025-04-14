@@ -6,10 +6,10 @@ import theme from './theme';
  
 // Components
 import Login from './pages/Login';
-import AdminDashboard from './pages/AdminDashboard';
-import EmployeeDashboard from './pages/EmployeeDashboard';
+import Dashboard from './pages/Dashboard';
 import Navigation from './components/Navigation';
 import Profile from './pages/Profile';
+import Users from './pages/Users';
  
 // Protected Route Component
 const ProtectedRoute = ({ children, allowedRoles }) => {
@@ -24,8 +24,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
   }
  
   if (allowedRoles && !allowedRoles.includes(user.role_id)) {
-    // Redirect to appropriate dashboard based on role_id
-    return <Navigate to={user.role_id === 'admin' ? '/admin/dashboard' : '/employee/dashboard'} />;
+    return <Navigate to="/" />;
   }
  
   return children;
@@ -40,7 +39,7 @@ const AppRoutes = () => {
         path="/login" 
         element={
           user ? (
-            <Navigate to={user.role_id === 'admin' ? '/admin/dashboard' : '/employee/dashboard'} />
+            <Navigate to="/" />
           ) : (
             <Login />
           )
@@ -50,7 +49,7 @@ const AppRoutes = () => {
         path="/"
         element={
           <ProtectedRoute>
-            <Navigate to={user?.role_id === 'admin' ? '/admin/dashboard' : '/employee/dashboard'} />
+            <Dashboard />
           </ProtectedRoute>
         }
       />
@@ -63,18 +62,10 @@ const AppRoutes = () => {
         }
       />
       <Route
-        path="/admin/*"
+        path="/admin/users"
         element={
           <ProtectedRoute allowedRoles={['admin']}>
-            <AdminDashboard />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/employee/*"
-        element={
-          <ProtectedRoute allowedRoles={['employee']}>
-            <EmployeeDashboard />
+            <Users />
           </ProtectedRoute>
         }
       />
@@ -82,14 +73,31 @@ const AppRoutes = () => {
   );
 };
  
+const AppContent = () => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (!user) {
+    return <AppRoutes />;
+  }
+
+  return (
+    <Navigation>
+      <AppRoutes />
+    </Navigation>
+  );
+};
+
 const App = () => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <AuthProvider>
         <Router>
-          <Navigation />
-          <AppRoutes />
+          <AppContent />
         </Router>
       </AuthProvider>
     </ThemeProvider>
