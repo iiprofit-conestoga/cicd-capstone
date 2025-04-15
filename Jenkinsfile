@@ -133,6 +133,7 @@ pipeline {
                     // Build and push frontend image
                     sh '''
                         cd ../frontend
+                        echo "Using BACKEND_URL: $BACKEND_URL"
                         docker build -t iiprofit/capstone-frontend:latest --platform linux/amd64 \
                             --build-arg VITE_API_URL=$BACKEND_URL \
                             -f Dockerfile ..
