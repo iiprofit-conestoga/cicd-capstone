@@ -86,6 +86,9 @@ pipeline {
         stage('Get Backend URL') {
             steps {
                 dir('infrastructure/terraform') {
+                    sh '''
+                        terraform refresh
+                    '''
                     script {
                         // Get the backend ALB DNS name from Terraform output
                         env.BACKEND_URL = sh(
@@ -115,7 +118,7 @@ pipeline {
                     sh '''
                         cd ../frontend
                         echo "Using BACKEND_URL: $BACKEND_URL"
-                        docker build -t iiprofit/capstone-frontend:latest --platform linux/amd64 \
+                        docker build --no-cache -t iiprofit/capstone-frontend:latest --platform linux/amd64 \
                             --build-arg VITE_API_URL=$BACKEND_URL \
                             -f Dockerfile ..
                         docker push iiprofit/capstone-frontend:latest
