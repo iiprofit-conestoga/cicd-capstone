@@ -40,7 +40,7 @@ const Login = () => {
     try {
       const user = await login(formData.email, formData.password);
       console.log(user);
-      navigate(user.role_id === 'admin' ? '/admin/dashboard' : '/employee/dashboard');
+      navigate(user.role_id === 'admin' ? '/admin/users' : '/');
     } catch (err) {
       // Error is handled by AuthContext
     } finally {

@@ -16,6 +16,7 @@ import {
   Divider,
   useTheme,
   useMediaQuery,
+  Container,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -23,10 +24,11 @@ import {
   Person,
   ExitToApp,
   ChevronLeft,
+  People,
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
  
-const Navigation = () => {
+const Navigation = ({ children }) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
   const { user, logout } = useAuth();
@@ -56,10 +58,25 @@ const Navigation = () => {
     }
   };
  
-  const menuItems = [
-    { text: 'Dashboard', icon: <Dashboard />, path: '/' },
-    { text: 'Profile', icon: <Person />, path: '/profile' },
-  ];
+  // Define menu items based on user role
+  const getMenuItems = () => {
+    const baseMenuItems = [
+      { text: 'Dashboard', icon: <Dashboard />, path: '/' },
+      { text: 'Profile', icon: <Person />, path: '/profile' },
+    ];
+
+    if (user?.role_id === 'admin') {
+      return [
+        ...baseMenuItems.slice(0, 1), // Dashboard
+        { text: 'Users', icon: <People />, path: '/admin/users' },
+        baseMenuItems[1], // Profile
+      ];
+    }
+
+    return baseMenuItems;
+  };
+
+  const menuItems = getMenuItems();
  
   const drawer = (
     <Box sx={{ width: 250 }}>
@@ -101,12 +118,13 @@ const Navigation = () => {
   );
  
   return (
-    <Box sx={{ display: 'flex' }}>
+    <Box sx={{ display: 'flex', minHeight: '100vh' }}>
       <AppBar
         position="fixed"
         sx={{
           width: { sm: `calc(100% - ${250}px)` },
           ml: { sm: `${250}px` },
+          bgcolor: theme.palette.primary.main,
         }}
       >
         <Toolbar>
@@ -183,6 +201,7 @@ const Navigation = () => {
             '& .MuiDrawer-paper': {
               boxSizing: 'border-box',
               width: 250,
+              bgcolor: theme.palette.background.default,
             },
           }}
         >
@@ -195,9 +214,12 @@ const Navigation = () => {
           flexGrow: 1,
           p: 3,
           width: { sm: `calc(100% - ${250}px)` },
-          mt: 8,
+          mt: { xs: 8, sm: 9 },
         }}
       >
+        <Container maxWidth="lg">
+          {children}
+        </Container>
       </Box>
     </Box>
   );

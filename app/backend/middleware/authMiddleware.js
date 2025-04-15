@@ -4,34 +4,48 @@ const { getHandlerResponse, httpStatus } = require('@adminsync/utils');
  
 // Protect routes
 const protect = async (req, res, next) => {
-  let token;
- 
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith('Bearer')
-  ) {
-    try {
-      // Get token from header
+  try {
+    let token;
+
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
       token = req.headers.authorization.split(' ')[1];
- 
+    }
+
+    if (!token) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Not authorized, no token',
+      });
+    }
+
+    try {
       // Verify token
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
- 
-      // Get user from the token
-      req.user = await User.findById(decoded.id).select('-password');
- 
+
+      // Get user from token
+      const user = await User.findById(decoded.id).select('-password');
+      
+      if (!user) {
+        return res.status(401).json({
+          status: 'error',
+          message: 'Not authorized, user not found',
+        });
+      }
+
+      // Add user to request object
+      req.user = user;
       next();
     } catch (error) {
-      res.status(httpStatus.UNAUTHORIZED).json(
-        getHandlerResponse('error', httpStatus.UNAUTHORIZED, 'Not authorized, token failed', null)
-      );
+      return res.status(401).json({
+        status: 'error',
+        message: 'Not authorized, token failed',
+      });
     }
-  }
- 
-  if (!token) {
-    res.status(httpStatus.UNAUTHORIZED).json(
-      getHandlerResponse('error', httpStatus.UNAUTHORIZED, 'Not authorized, no token', null)
-    );
+  } catch (error) {
+    return res.status(500).json({
+      status: 'error',
+      message: 'Server error',
+    });
   }
 };
  
