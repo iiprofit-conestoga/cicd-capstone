@@ -6,7 +6,8 @@ pipeline {
     }
     
     environment {
-        AWS_CREDENTIALS = credentials('aws-credentials')
+        AWS_ACCESS_KEY_ID = credentials('aws-access-key')
+        AWS_SECRET_ACCESS_KEY = credentials('aws-secret-key')
         DOCKER_CREDENTIALS = credentials('docker-credentials')
         GITHUB_CREDENTIALS = credentials('github-credentials')
         AWS_REGION = 'us-east-1'
@@ -91,7 +92,7 @@ pipeline {
                     sh '''
                         cd app/backend
                         docker build -t iiprofit/capstone-backend:latest --platform linux/amd64 .
-                        docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+                        docker login -u $DOCKER_CREDENTIALS_USR -p $DOCKER_CREDENTIALS_PSW
                         docker push iiprofit/capstone-backend:latest
                     '''
                     
@@ -127,7 +128,9 @@ pipeline {
     
     post {
         always {
-            cleanWs()
+            node {
+                cleanWs()
+            }
         }
         success {
             echo 'Pipeline completed successfully!'
