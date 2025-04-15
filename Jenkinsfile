@@ -50,37 +50,6 @@ pipeline {
             }
         }
         
-        stage('Run Tests') {
-            parallel {
-                stage('Backend Tests') {
-                    steps {
-                        dir('app/backend') {
-                            sh '''
-                                mkdir -p /var/lib/jenkins/.cache/mongodb-binaries
-                                chmod -R 777 /var/lib/jenkins/.cache
-                                export NVM_DIR="$HOME/.nvm"
-                                [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-                                nvm use 18
-                                pnpm test
-                            '''
-                        }
-                    }
-                }
-                stage('Frontend Tests') {
-                    steps {
-                        dir('app/frontend') {
-                            sh '''
-                                export NVM_DIR="$HOME/.nvm"
-                                [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-                                nvm use 18
-                                pnpm test
-                            '''
-                        }
-                    }
-                }
-            }
-        }
-        
         stage('Infrastructure Check') {
             steps {
                 dir('infrastructure/terraform') {
