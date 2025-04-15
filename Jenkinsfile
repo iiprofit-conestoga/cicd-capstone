@@ -56,6 +56,8 @@ pipeline {
                     steps {
                         dir('app/backend') {
                             sh '''
+                                mkdir -p /var/lib/jenkins/.cache/mongodb-binaries
+                                chmod -R 777 /var/lib/jenkins/.cache
                                 export NVM_DIR="$HOME/.nvm"
                                 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
                                 nvm use 18
