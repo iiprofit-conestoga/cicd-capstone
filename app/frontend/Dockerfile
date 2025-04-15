@@ -20,6 +20,12 @@ RUN pnpm install --frozen-lockfile
 
 # Build the frontend
 WORKDIR /app/app/frontend
+
+# Create a .env file with the API URL
+ARG VITE_API_URL
+RUN echo "VITE_API_URL=${VITE_API_URL:-http://localhost:3000}" > .env
+
+# Build the application
 RUN pnpm build
 
 # Production stage

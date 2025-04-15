@@ -150,10 +150,6 @@ resource "aws_ecs_task_definition" "frontend" {
           value = var.environment
         },
         {
-          name  = "API_URL"
-          value = "http://${var.backend_alb_dns_name}:3000"
-        },
-        {
           name  = "VITE_API_URL"
           value = "http://${var.backend_alb_dns_name}:3000"
         }
