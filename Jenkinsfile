@@ -9,8 +9,8 @@ pipeline {
         AWS_CREDENTIALS = credentials('aws-credentials')
         DOCKER_CREDENTIALS = credentials('docker-credentials')
         GITHUB_CREDENTIALS = credentials('github-credentials')
-        AWS_REGION=us-east-1
-        DOCKER_REGISTRY=iiprofit
+        AWS_REGION = 'us-east-1'
+        DOCKER_REGISTRY = 'iiprofit'
     }
     
     stages {
