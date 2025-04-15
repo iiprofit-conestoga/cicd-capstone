@@ -276,9 +276,6 @@ graph TD
 └────────────────────────────┘
 ```
 
-### Mermaid Diagram
-
-```mermaid
 graph TD
     Dev[Developer (Git Push)] --> GH[GitHub Repo]
     GH -->|Webhook| Jenkins[Jenkins Pipeline]
@@ -293,12 +290,3 @@ graph TD
     FE -->|API Calls| BEALB
     BEALB --> BE
 ```
-
-## Notes
-
-1. These diagrams are created using Mermaid syntax and can be rendered on GitHub
-2. The diagrams represent different aspects of the application architecture
-
-## How to View
-
-1. These diagrams can be viewed directly on GitHub
