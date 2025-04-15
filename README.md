@@ -1,6 +1,6 @@
 # AdminSync Monorepo Project
 
-This is a monorepo project using pnpm workspaces to manage multiple packages and applications.
+This is a monorepo project using pnpm workspaces to manage multiple packages and applications..
 
 ## Project Structure
 
