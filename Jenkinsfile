@@ -55,14 +55,24 @@ pipeline {
                 stage('Backend Tests') {
                     steps {
                         dir('app/backend') {
-                            sh 'pnpm test'
+                            sh '''
+                                export NVM_DIR="$HOME/.nvm"
+                                [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+                                nvm use 18
+                                pnpm test
+                            '''
                         }
                     }
                 }
                 stage('Frontend Tests') {
                     steps {
                         dir('app/frontend') {
-                            sh 'pnpm test'
+                            sh '''
+                                export NVM_DIR="$HOME/.nvm"
+                                [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+                                nvm use 18
+                                pnpm test
+                            '''
                         }
                     }
                 }
