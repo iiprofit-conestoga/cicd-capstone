@@ -128,9 +128,7 @@ pipeline {
     
     post {
         always {
-            node {
-                cleanWs()
-            }
+            cleanWs()
         }
         success {
             echo 'Pipeline completed successfully!'
