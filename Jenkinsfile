@@ -42,27 +42,6 @@ pipeline {
             }
         }
         
-        stage('Build Docker Images') {
-            steps {
-                script {
-                    // Build and push backend image
-                    sh '''
-                        cd app/backend
-                        docker build -t iiprofit/capstone-backend:latest --platform linux/amd64 .
-                        docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
-                        docker push iiprofit/capstone-backend:latest
-                    '''
-                    
-                    // Build and push frontend image
-                    sh '''
-                        cd ../frontend
-                        docker build -t iiprofit/capstone-frontend:latest --platform linux/amd64 -f Dockerfile ..
-                        docker push iiprofit/capstone-frontend:latest
-                    '''
-                }
-            }
-        }
-        
         stage('Infrastructure Check') {
             steps {
                 dir('infrastructure/terraform') {
@@ -84,6 +63,46 @@ pipeline {
             }
         }
         
+        stage('Get Backend URL') {
+            steps {
+                dir('infrastructure/terraform') {
+                    script {
+                        // Get the backend ALB DNS name from Terraform output
+                        env.BACKEND_URL = sh(
+                            script: 'terraform output -raw backend_alb_dns_name',
+                            returnStdout: true
+                        ).trim()
+                        // Construct the full backend URL
+                        env.BACKEND_URL = "http://${env.BACKEND_URL}:3000"
+                        echo "Backend URL: ${env.BACKEND_URL}"
+                    }
+                }
+            }
+        }
+        
+        stage('Build Docker Images') {
+            steps {
+                script {
+                    // Build and push backend image
+                    sh '''
+                        cd app/backend
+                        docker build -t iiprofit/capstone-backend:latest --platform linux/amd64 .
+                        docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+                        docker push iiprofit/capstone-backend:latest
+                    '''
+                    
+                    // Build and push frontend image
+                    sh '''
+                        cd ../frontend
+                        docker build -t iiprofit/capstone-frontend:latest --platform linux/amd64 \
+                            --build-arg VITE_API_URL=$BACKEND_URL \
+                            -f Dockerfile ..
+                        docker push iiprofit/capstone-frontend:latest
+                    '''
+                }
+            }
+        }
+        
         stage('Verify Deployment') {
             steps {
                 script {
@@ -91,9 +110,11 @@ pipeline {
                     sh '''
                         sleep 30
                         # Check backend health
-                        curl -f http://dev-backend-alb-534485236.us-east-1.elb.amazonaws.com:3000/api/health || exit 1
+                        curl -f $BACKEND_URL/api/health || exit 1
+                        # Get frontend ALB DNS name from Terraform output
+                        FRONTEND_URL="http://$(cd infrastructure/terraform && terraform output -raw frontend_alb_dns_name):80"
                         # Check frontend health
-                        curl -f http://dev-frontend-alb-534485236.us-east-1.elb.amazonaws.com:80 || exit 1
+                        curl -f $FRONTEND_URL || exit 1
                     '''
                 }
             }
