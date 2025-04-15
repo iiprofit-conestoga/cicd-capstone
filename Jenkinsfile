@@ -1,6 +1,10 @@
 pipeline {
     agent any
     
+    triggers {
+        githubPush()
+    }
+    
     environment {
         AWS_CREDENTIALS = credentials('aws-credentials')
         DOCKER_CREDENTIALS = credentials('docker-credentials')
