@@ -1,4 +1,9 @@
 terraform {
+  backend "s3" {
+    bucket = "ksolanki6269-iac-backup"
+    key    = "capstone/terraform.tfstate"
+    region = "us-east-1"
+  }
   required_providers {
     aws = {
       source  = "hashicorp/aws"
