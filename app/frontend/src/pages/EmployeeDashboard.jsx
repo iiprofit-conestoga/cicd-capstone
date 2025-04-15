@@ -22,8 +22,8 @@ import {
   Alert
 } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
-const PORT = import.meta.env.VITE_PORT;
- 
+import config from '../config';
+
 const EmployeeDashboard = () => {
   const [users, setUsers] = useState([]);
   const [openDialog, setOpenDialog] = useState(false);
@@ -38,20 +38,20 @@ const EmployeeDashboard = () => {
     message: '',
     severity: 'success'
   });
- 
+
   useEffect(() => {
     fetchUsers();
   }, []);
- 
+
   const fetchUsers = async () => {
     try {
-      const response = await axios.get(`http://localhost:${PORT}/api/users`);
+      const response = await axios.get(`${config.apiUrl}/api/users`);
       setUsers(response.data);
     } catch (error) {
       showSnackbar('Error fetching users', 'error');
     }
   };
- 
+
   const handleOpenDialog = (user = null) => {
     if (user) {
       setSelectedUser(user);
@@ -70,7 +70,7 @@ const EmployeeDashboard = () => {
     }
     setOpenDialog(true);
   };
- 
+
   const handleCloseDialog = () => {
     setOpenDialog(false);
     setSelectedUser(null);
@@ -80,22 +80,22 @@ const EmployeeDashboard = () => {
       role: 'user'
     });
   };
- 
+
   const handleInputChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
     });
   };
- 
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       if (selectedUser) {
-        await axios.put(`http://localhost:${PORT}/api/users/${selectedUser._id}`, formData);
+        await axios.put(`${config.apiUrl}/api/users/${selectedUser._id}`, formData);
         showSnackbar('User updated successfully');
       } else {
-        await axios.post(`http://localhost:${PORT}/api/users`, formData);
+        await axios.post(`${config.apiUrl}/api/users`, formData);
         showSnackbar('User created successfully');
       }
       handleCloseDialog();
@@ -104,11 +104,11 @@ const EmployeeDashboard = () => {
       showSnackbar(error.response?.data?.message || 'Error processing request', 'error');
     }
   };
- 
+
   const handleDelete = async (userId) => {
     if (window.confirm('Are you sure you want to delete this user?')) {
       try {
-        await axios.delete(`http://localhost:${PORT}/api/users/${userId}`);
+        await axios.delete(`${config.apiUrl}/api/users/${userId}`);
         showSnackbar('User deleted successfully');
         fetchUsers();
       } catch (error) {
@@ -116,7 +116,7 @@ const EmployeeDashboard = () => {
       }
     }
   };
- 
+
   const showSnackbar = (message, severity = 'success') => {
     setSnackbar({
       open: true,
@@ -124,11 +124,11 @@ const EmployeeDashboard = () => {
       severity
     });
   };
- 
+
   const handleCloseSnackbar = () => {
     setSnackbar({ ...snackbar, open: false });
   };
- 
+
   return (
     <Container maxWidth="lg">
       <Box sx={{ my: 4 }}>
@@ -173,7 +173,7 @@ const EmployeeDashboard = () => {
           </Table>
         </TableContainer>
       </Box>
- 
+
       <Dialog open={openDialog} onClose={handleCloseDialog}>
         <DialogTitle>{selectedUser ? 'Edit User' : 'Add New User'}</DialogTitle>
         <DialogContent>
@@ -222,7 +222,7 @@ const EmployeeDashboard = () => {
           </Button>
         </DialogActions>
       </Dialog>
- 
+
       <Snackbar
         open={snackbar.open}
         autoHideDuration={6000}
@@ -239,6 +239,6 @@ const EmployeeDashboard = () => {
     </Container>
   );
 };
- 
+
 export default EmployeeDashboard;
  

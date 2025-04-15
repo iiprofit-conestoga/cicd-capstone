@@ -27,9 +27,8 @@ import {
 } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
-const PORT = import.meta.env.VITE_PORT;
+import config from '../config';
 
- 
 const AdminDashboard = () => {
   const [users, setUsers] = useState([]);
   const [openDialog, setOpenDialog] = useState(false);
@@ -48,14 +47,14 @@ const AdminDashboard = () => {
     severity: 'success'
   });
   const { api } = useAuth();
- 
+
   useEffect(() => {
     fetchUsers();
   }, []);
- 
+
   const fetchUsers = async () => {
     try {
-      const response = await api.get(`/api/users/all`);
+      const response = await api.get(`${config.apiUrl}/api/users/all`);
       if (response.data && response.data.data) {
         setUsers(response.data.data);
       } else {
@@ -66,7 +65,7 @@ const AdminDashboard = () => {
       showSnackbar(error.response?.data?.message || 'Error fetching users', 'error');
     }
   };
- 
+
   const handleOpenDialog = (user = null) => {
     if (user) {
       setSelectedUser(user);
@@ -91,7 +90,7 @@ const AdminDashboard = () => {
     }
     setOpenDialog(true);
   };
- 
+
   const handleCloseDialog = () => {
     setOpenDialog(false);
     setSelectedUser(null);
@@ -104,14 +103,14 @@ const AdminDashboard = () => {
       address: ''
     });
   };
- 
+
   const handleInputChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
     });
   };
- 
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -124,10 +123,10 @@ const AdminDashboard = () => {
       }
       
       if (selectedUser) {
-        await api.put(`/api/users/${selectedUser._id}`, userData);
+        await api.put(`${config.apiUrl}/api/users/${selectedUser._id}`, userData);
         showSnackbar('User updated successfully');
       } else {
-        await api.post(`/api/users/add`, userData);
+        await api.post(`${config.apiUrl}/api/users/add`, userData);
         showSnackbar('User created successfully');
       }
       handleCloseDialog();
@@ -136,11 +135,11 @@ const AdminDashboard = () => {
       showSnackbar(error.response?.data?.message || 'Error processing request', 'error');
     }
   };
- 
+
   const handleDelete = async (userId) => {
     if (window.confirm('Are you sure you want to delete this user?')) {
       try {
-        await api.delete(`/api/users/${userId}`);
+        await api.delete(`${config.apiUrl}/api/users/${userId}`);
         showSnackbar('User deleted successfully');
         fetchUsers();
       } catch (error) {
@@ -148,7 +147,7 @@ const AdminDashboard = () => {
       }
     }
   };
- 
+
   const showSnackbar = (message, severity = 'success') => {
     setSnackbar({
       open: true,
@@ -156,11 +155,11 @@ const AdminDashboard = () => {
       severity
     });
   };
- 
+
   const handleCloseSnackbar = () => {
     setSnackbar({ ...snackbar, open: false });
   };
- 
+
   return (
     <Container maxWidth="lg">
       <Box sx={{ my: 4 }}>
@@ -209,7 +208,7 @@ const AdminDashboard = () => {
           </Table>
         </TableContainer>
       </Box>
- 
+
       <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
         <DialogTitle>{selectedUser ? 'Edit User' : 'Add New User'}</DialogTitle>
         <DialogContent>
@@ -286,7 +285,7 @@ const AdminDashboard = () => {
           </Button>
         </DialogActions>
       </Dialog>
- 
+
       <Snackbar
         open={snackbar.open}
         autoHideDuration={6000}
@@ -303,6 +302,6 @@ const AdminDashboard = () => {
     </Container>
   );
 };
- 
+
 export default AdminDashboard;
  

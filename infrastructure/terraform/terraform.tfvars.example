@@ -1,0 +1,25 @@
+# Environment
+environment = "dev"
+
+# AWS Region
+aws_region = "us-east-1"
+
+# VPC Configuration
+vpc_cidr             = "10.0.0.0/16"
+availability_zones   = ["us-east-1a", "us-east-1b", "us-east-1c"]
+public_subnet_cidrs  = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
+private_subnet_cidrs = ["10.0.4.0/24", "10.0.5.0/24", "10.0.6.0/24"]
+
+# EC2 Key Pair
+key_name = "your-key-pair-name"  # Replace with your key pair name
+
+# MongoDB Configuration
+db_username = "your_mongodb_username"  # Replace with your MongoDB username
+db_password = "your_mongodb_password"  # Replace with your MongoDB password
+
+# Docker Images
+frontend_image = "your-dockerhub-username/capstone-frontend:latest"  # Replace with your Docker Hub username
+backend_image  = "your-dockerhub-username/capstone-backend:latest"   # Replace with your Docker Hub username
+
+# JWT Configuration
+jwt_secret = "your-jwt-secret-here"  # Replace with your JWT secret 
