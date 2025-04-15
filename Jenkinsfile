@@ -21,10 +21,32 @@ pipeline {
             }
         }
         
+        stage('Install Node.js') {
+            steps {
+                sh '''
+                    if ! command -v node >/dev/null 2>&1 || ! command -v npm >/dev/null 2>&1; then
+                        export NVM_DIR="$HOME/.nvm"
+                        if [ ! -d "$NVM_DIR" ]; then
+                            curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+                        fi
+                        . "$NVM_DIR/nvm.sh"
+                        nvm install 18
+                    fi
+                    node -v
+                    npm -v
+                '''
+            }
+        }
+        
         stage('Install Dependencies') {
             steps {
-                sh 'npm install -g pnpm@10.7.0'
-                sh 'pnpm install --frozen-lockfile'
+                sh '''
+                    export NVM_DIR="$HOME/.nvm"
+                    [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+                    nvm use 18
+                    npm install -g pnpm@10.7.0
+                    pnpm install --frozen-lockfile
+                '''
             }
         }
         
