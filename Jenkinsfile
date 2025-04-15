@@ -54,6 +54,12 @@ pipeline {
             steps {
                 dir('infrastructure/terraform') {
                     sh '''
+                        if ! command -v terraform >/dev/null 2>&1; then
+                            wget https://releases.hashicorp.com/terraform/1.7.5/terraform_1.7.5_linux_amd64.zip
+                            unzip terraform_1.7.5_linux_amd64.zip
+                            sudo mv terraform /usr/local/bin/
+                        fi
+                        terraform version
                         terraform init
                         terraform plan -out=tfplan
                     '''
@@ -65,6 +71,12 @@ pipeline {
             steps {
                 dir('infrastructure/terraform') {
                     sh '''
+                        if ! command -v terraform >/dev/null 2>&1; then
+                            wget https://releases.hashicorp.com/terraform/1.7.5/terraform_1.7.5_linux_amd64.zip
+                            unzip terraform_1.7.5_linux_amd64.zip
+                            sudo mv terraform /usr/local/bin/
+                        fi
+                        terraform version
                         terraform apply -auto-approve
                     '''
                 }
