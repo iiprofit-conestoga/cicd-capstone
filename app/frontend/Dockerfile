@@ -4,33 +4,36 @@ FROM node:18-alpine as build
 # Set working directory
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
-COPY pnpm-lock.yaml ./
+# Install pnpm globally
+RUN npm install -g pnpm@10.7.0
 
-# Install pnpm
-RUN npm install -g pnpm
+# Copy root workspace files
+COPY ../../package.json ./
+COPY ../../pnpm-workspace.yaml ./
+COPY ../../pnpm-lock.yaml ./
 
-# Install dependencies
-RUN pnpm install
+# Copy the entire app directory to maintain workspace structure
+COPY ../../app ./app
 
-# Copy source code
-COPY . .
+# Install dependencies using workspace
+RUN pnpm install --frozen-lockfile
 
-# Copy Docker environment file
-COPY .env.docker .env
-
-# Build the application
+# Build the frontend
+WORKDIR /app/app/frontend
 RUN pnpm build
 
 # Production stage
 FROM nginx:alpine
 
 # Copy built assets from build stage
-COPY --from=build /app/dist /usr/share/nginx/html
+COPY --from=build /app/app/frontend/dist /usr/share/nginx/html
 
 # Copy nginx configuration
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY ../../app/frontend/nginx.conf /etc/nginx/conf.d/default.conf
+
+# Add health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget --quiet --tries=1 --spider http://localhost:80/ || exit 1
 
 # Expose port
 EXPOSE 80
