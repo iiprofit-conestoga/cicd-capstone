@@ -47,7 +47,6 @@ tmp/
 temp/
 
 # Terraform
-*.tfvars
 !terraform.tfvars.example
 .terraform/
 *.tfstate
