@@ -108,15 +108,14 @@ pipeline {
                 script {
                     // Build and push backend image
                     sh '''
-                        cd app/backend
-                        docker build -t iiprofit/capstone-backend:latest --platform linux/amd64 .
+                        docker build -t iiprofit/capstone-backend:latest --platform linux/amd64 -f app/backend/Dockerfile .
                         docker login -u $DOCKER_CREDENTIALS_USR -p $DOCKER_CREDENTIALS_PSW
                         docker push iiprofit/capstone-backend:latest
                     '''
                     
                     // Build and push frontend image
                     sh '''
-                        cd ../frontend
+                        cd frontend
                         echo "Using BACKEND_URL: $BACKEND_URL"
                         docker build --no-cache -t iiprofit/capstone-frontend:latest --platform linux/amd64 \
                             --build-arg VITE_API_URL=$BACKEND_URL \
